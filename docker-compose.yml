@@ -86,8 +86,10 @@ services:
     ###### linux
     command:
     - '--path.rootfs=/host'
+    pid:
+    - 'host'
     volumes:
-     - '/:/host:ro,rslave'
+    - '/:/host:ro,rslave'
     ###### windows
     networks:
       - loki

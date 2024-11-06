@@ -86,8 +86,7 @@ services:
     ###### linux
     command:
     - '--path.rootfs=/host'
-    pid:
-    - 'host'
+    pid: 'host'
     volumes:
     - '/:/host:ro,rslave'
     ###### windows

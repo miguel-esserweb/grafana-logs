@@ -1,0 +1,121 @@
+volumes:
+  grafana-storage:
+  prometheus-storage:
+  loki-storage:
+
+networks:
+  loki:
+
+services:
+  # krakend:
+  #   container_name: krakend
+  #   image: devopsfaith/krakend:config-watcher 
+  #   volumes:
+  #     - ./:/etc/krakend 
+  #   ports:
+  #     - "8080:8080"
+  #   command: ["run", "-dc", "/etc/krakend/krakend.json"]  
+  #   networks:
+  #     - loki
+  #   logging:
+  #     driver: loki
+  #     options:
+  #       loki-url: "http://localhost:3100/loki/api/v1/push"
+
+  # krakend:
+  #   container_name: krakend
+  #   image: devopsfaith/krakend:config-watcher
+  #   volumes:
+  #     - "./:/etc/krakend/"
+  #   ports:
+  #     - "8080:8080"
+  #   command: ["run", "-dc", "krakend.json"]
+  #   networks:
+  #     - loki
+  #   logging:
+  #     driver: loki
+  #     options:
+  #       loki-url: "http://localhost:3100/loki/api/v1/push"
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - "grafana-storage:/var/lib/grafana"
+    networks:
+      - loki
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+    - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    - prometheus-storage:/prometheus
+    ports:
+    - 9090:9090
+    command:
+    - '--config.file=/etc/prometheus/prometheus.yml'
+    - '--storage.tsdb.path=/prometheus'
+    - '--storage.tsdb.retention.time=90d'
+    - '--web.enable-lifecycle'
+    networks:
+      - loki
+
+  # cadvisor:
+  #   image: gcr.io/cadvisor/cadvisor:latest
+  #   container_name: cadvisor
+  #   restart: unless-stopped
+  #   expose:
+  #     - "8081"
+  #   volumes:
+  #     - "/:/rootfs:ro"
+  #     - "/var/run:/var/run:ro"
+  #     - "/sys:/sys:ro"
+  #     - "/var/lib/docker/:/var/lib/docker:ro"
+  #     - "/dev/disk/:/dev/disk:ro"
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    restart: unless-stopped
+    ports:
+    - 9100:9100
+    ###### linux
+    # command:
+    # - '--path.rootfs=/host'
+    # pid: host
+    # volumes:
+    # - '/:/host:ro,rslave'
+    ###### windows
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    command: 
+      - '--path.procfs=/host/proc' 
+      - '--path.sysfs=/host/sys'
+      - --collector.filesystem.ignored-mount-points
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    networks:
+      - loki
+
+  loki:
+    image: grafana/loki:2.9.2
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - loki
+
+  # promtail:
+  #   image: grafana/promtail:2.9.2
+  #   volumes:
+  #     - /var/log:/var/log
+  #     - ./promtail-config.yaml:/etc/promtail/config.yml
+  #     - loki-storage:/loki
+  #   command: -config.file=/etc/promtail/config.yml
+  #   networks:
+  #     - loki
+        

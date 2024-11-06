@@ -52,9 +52,10 @@ services:
     container_name: prometheus
     restart: unless-stopped
     volumes:
-    - prometheus-storage:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-storage:/prometheus
     ports:
-    - 9090:9090
+      - 9090:9090
     command:
     - '--config.file=/etc/prometheus/prometheus.yml'
     - '--storage.tsdb.path=/prometheus'
